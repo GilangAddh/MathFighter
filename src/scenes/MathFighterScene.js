@@ -26,6 +26,10 @@ export default class MathFighterScene extends Phaser.Scene {
     this.button0 = undefined;
     this.buttonDel = undefined;
     this.buttonOk = undefined;
+
+    this.numberArray = [];
+    this.number = 0;
+    this.question = [];
   }
 
   preload() {
@@ -158,16 +162,18 @@ export default class MathFighterScene extends Phaser.Scene {
     this.resultText = this.add.text(this.gameHalfWidth, 200, "0", {
       fontSize: "32px",
       //@ts-ignore
-      fill: "#000",
+      fill: "yellow",
       fontFamily: "Arial, sans-serif",
     });
     this.questionText = this.add.text(this.gameHalfWidth, 100, "0", {
       fontSize: "32px",
       //@ts-ignore
-      fill: "#000",
+      fill: "yellow",
     });
 
     this.createButtons();
+    this.input.on("gameobjectdown", this.addNumber, this);
+    this.generateQuestion();
   }
 
   createButtons() {
@@ -258,5 +264,75 @@ export default class MathFighterScene extends Phaser.Scene {
       )
       .setInteractive()
       .setData("value", "ok");
+  }
+
+  addNumber(pointer, object, event) {
+    let value = object.getData("value");
+    if (isNaN(value)) {
+      if (value == "del") {
+        this.numberArray.pop();
+        if (this.numberArray.length < 1) {
+          this.numberArray[0] = 0;
+        }
+      }
+      if (value == "ok") {
+        this.checkAnswer();
+        this.numberArray = [];
+        this.numberArray[0] = 0;
+      }
+    } else {
+      if (this.numberArray.length == 1 && this.numberArray[0] == 0) {
+        this.numberArray[0] = value;
+      } else {
+        if (this.numberArray.length < 10) {
+          this.numberArray.push(value);
+        }
+      }
+    }
+    this.number = parseInt(this.numberArray.join(""));
+    //@ts-ignore
+    this.resultText.setText(this.number);
+    const textHalfWidth = this.resultText.width * 0.5;
+    this.resultText.setX(this.gameHalfWidth - textHalfWidth);
+    event.stopPropagation();
+  }
+
+  getOperator() {
+    const operator = ["+", "-", "x", ":"];
+    return operator[Phaser.Math.Between(0, 3)];
+  }
+
+  generateQuestion() {
+    let numberA = Phaser.Math.Between(0, 50);
+    let numberB = Phaser.Math.Between(0, 50);
+    let operator = this.getOperator();
+    if (operator === "+") {
+      this.question[0] = `${numberA} + ${numberB}`;
+      this.question[1] = numberA + numberB;
+    }
+    if (operator === "x") {
+      this.question[0] = `${numberA} x ${numberB}`;
+      this.question[1] = numberA * numberB;
+    }
+    if (operator === "-") {
+      if (numberB > numberA) {
+        this.question[0] = `${numberB} - ${numberA}`;
+        this.question[1] = numberB - numberA;
+      } else {
+        this.question[0] = `${numberA} - ${numberB}`;
+        this.question[1] = numberA - numberB;
+      }
+    }
+    if (operator === ":") {
+      do {
+        numberA = Phaser.Math.Between(0, 50);
+        numberB = Phaser.Math.Between(0, 50);
+      } while (!Number.isInteger(numberA / numberB));
+      this.question[0] = `${numberA} : ${numberB}`;
+      this.question[1] = numberA / numberB;
+    }
+    this.questionText.setText(this.question[0]);
+    const textHalfWidth = this.questionText.width * 0.5;
+    this.questionText.setX(this.gameHalfWidth - textHalfWidth);
   }
 }
