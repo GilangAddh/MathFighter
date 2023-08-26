@@ -34,6 +34,13 @@ export default class MathFighterScene extends Phaser.Scene {
     this.correctAnswer = undefined;
     this.playerAttack = false;
     this.enemyAttack = false;
+
+    this.score = 0;
+    this.scoreLabel = undefined;
+
+    this.timer = 30;
+    this.timerLabel = undefined;
+    this.countdown = undefined;
   }
 
   preload() {
@@ -123,6 +130,22 @@ export default class MathFighterScene extends Phaser.Scene {
       null,
       this
     );
+
+    this.scoreLabel = this.add
+      .text(10, 10, "Score :", {
+        // @ts-ignore
+        fill: "white",
+        backgroundColor: "black",
+      })
+      .setDepth(1);
+
+    this.timerLabel = this.add
+      .text(380, 10, "Time :", {
+        // @ts-ignore
+        fill: "white",
+        backgroundColor: "black",
+      })
+      .setDepth(1);
   }
 
   update(time) {
@@ -132,6 +155,7 @@ export default class MathFighterScene extends Phaser.Scene {
         this.createSlash(this.player.x + 60, this.player.y, 4, 600);
       });
       this.playerAttack = true;
+      this.score += 10;
     }
     if (this.correctAnswer === undefined) {
       this.player.anims.play("player-standby", true);
@@ -143,6 +167,11 @@ export default class MathFighterScene extends Phaser.Scene {
         this.createSlash(this.enemy.x - 60, this.enemy.y, 2, -600, true);
       });
       this.enemyAttack = true;
+      this.score -= 5;
+    }
+    this.scoreLabel.setText("Score :" + this.score);
+    if (this.startGame == true) {
+      this.timerLabel.setText("Timer :" + this.timer);
     }
   }
 
@@ -213,6 +242,13 @@ export default class MathFighterScene extends Phaser.Scene {
     this.createButtons();
     this.input.on("gameobjectdown", this.addNumber, this);
     this.generateQuestion();
+
+    this.countdown = this.time.addEvent({
+      delay: 1000,
+      callback: this.gameOver,
+      callbackScope: this,
+      loop: true,
+    });
   }
 
   createButtons() {
@@ -409,5 +445,12 @@ export default class MathFighterScene extends Phaser.Scene {
       this.correctAnswer = undefined;
       this.generateQuestion();
     });
+  }
+
+  gameOver() {
+    this.timer--;
+    if (this.timer < 0) {
+      this.scene.start("over-scene", { score: this.score });
+    }
   }
 }
